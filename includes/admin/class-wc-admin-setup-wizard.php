@@ -125,11 +125,16 @@ class WC_Admin_Setup_Wizard {
 		return current_user_can( 'install_plugins' );
 	}
 
+	protected function should_show_mailchimp() {
+		return current_user_can( 'install_plugins' );
+	}
+
 	protected function should_show_recommended_step() {
 		// Show if at least one of the recommendations will be displayed
 		return $this->should_show_theme()
 			|| $this->should_show_automated_tax()
-			|| $this->should_show_google_analytics();
+			|| $this->should_show_google_analytics()
+			|| $this->should_show_mailchimp();
 	}
 
 	/**
@@ -1645,6 +1650,16 @@ class WC_Admin_Setup_Wizard {
 						'img_alt'     => __( 'Google Analytics icon', 'woocommerce' ),
 					) );
 				endif;
+
+				if ( $this->should_show_mailchimp() ) :
+					$this->display_recommended_item( array(
+						'type'        => 'mailchimp',
+						'title'       => __( 'MailChimp', 'woocommerce' ),
+						'description' => __( 'Join the 16 million customers who use MailChimp. Sync list and store data to send automated emails, and targeted campaigns.', 'woocommerce' ),
+						'img_url'     => WC()->plugin_url() . '/assets/images/mailchimp.svg',
+						'img_alt'     => __( 'MailChimp icon', 'woocommerce' ),
+					) );
+				endif;
 			?>
 		</ul>
 			<p class="wc-setup-actions step">
@@ -1664,6 +1679,7 @@ class WC_Admin_Setup_Wizard {
 		$setup_storefront       = isset( $_POST['setup_storefront_theme'] ) && 'yes' === $_POST['setup_storefront_theme'];
 		$setup_automated_tax    = isset( $_POST['setup_automated_taxes'] ) && 'yes' === $_POST['setup_automated_taxes'];
 		$setup_google_analytics = isset( $_POST['setup_google_analytics'] ) && 'yes' === $_POST['setup_google_analytics'];
+		$setup_mailchimp        = isset( $_POST['setup_mailchimp'] ) && 'yes' === $_POST['setup_mailchimp'];
 
 		update_option( 'woocommerce_calc_taxes', $setup_automated_tax ? 'yes' : 'no' );
 		update_option( 'woocommerce_setup_automated_taxes', $setup_automated_tax );
@@ -1682,6 +1698,16 @@ class WC_Admin_Setup_Wizard {
 				array(
 					'name'      => __( 'WooCommerce Google Analytics Integration', 'woocommerce' ),
 					'repo-slug' => 'woocommerce-google-analytics-integration',
+				)
+			);
+		}
+
+		if ( $setup_mailchimp ) {
+			$this->install_plugin(
+				'mailchimp-for-woocommerce',
+				array(
+					'name'      => __( 'MailChimp for WooCommerce', 'woocommerce' ),
+					'repo-slug' => 'mailchimp-for-woocommerce',
 				)
 			);
 		}
