@@ -71,7 +71,7 @@ class WC_Admin_Setup_Wizard {
 	 *
 	 * @return boolean
 	 */
-	protected function should_show_theme_extra() {
+	protected function should_show_theme() {
 		$support_woocommerce = current_theme_supports( 'woocommerce' ) && ! $this->is_default_theme();
 
 		return (
@@ -106,7 +106,7 @@ class WC_Admin_Setup_Wizard {
 	 * The "automated tax" extra should only be shown if the current user can
 	 * install plugins and the store is in a supported country.
 	 */
-	protected function should_show_automated_tax_extra() {
+	protected function should_show_automated_tax() {
 		if ( ! current_user_can( 'install_plugins' ) ) {
 			return false;
 		}
@@ -119,6 +119,12 @@ class WC_Admin_Setup_Wizard {
 		);
 
 		return in_array( $country_code, $tax_supported_countries, true );
+	}
+
+	protected function should_show_recommended_step() {
+		// Show if at least one of the recommendations will be displayed
+		return $this->should_show_theme()
+			|| $this->should_show_automated_tax();
 	}
 
 	/**
@@ -144,10 +150,10 @@ class WC_Admin_Setup_Wizard {
 				'view'    => array( $this, 'wc_setup_shipping' ),
 				'handler' => array( $this, 'wc_setup_shipping_save' ),
 			),
-			'extras'      => array(
-				'name'    => __( 'Extras', 'woocommerce' ),
-				'view'    => array( $this, 'wc_setup_extras' ),
-				'handler' => array( $this, 'wc_setup_extras_save' ),
+			'recommended' => array(
+				'name'    => __( 'Recommended', 'woocommerce' ),
+				'view'    => array( $this, 'wc_setup_recommended' ),
+				'handler' => array( $this, 'wc_setup_recommended_save' ),
 			),
 			'activate'    => array(
 				'name'    => __( 'Activate', 'woocommerce' ),
@@ -161,9 +167,9 @@ class WC_Admin_Setup_Wizard {
 			),
 		);
 
-		// Hide the extras step if this store/user isn't eligible for them.
-		if ( ! $this->should_show_theme_extra() && ! $this->should_show_automated_tax_extra() ) {
-			unset( $default_steps['extras'] );
+		// Hide recommended step if nothing is going to be shown there
+		if ( ! $this->should_show_recommended_step() ) {
+			unset( $default_steps['recommended'] );
 		}
 
 		// Hide shipping step if the store is selling digital products only.
@@ -1560,11 +1566,11 @@ class WC_Admin_Setup_Wizard {
 	}
 
 	/**
-	 * Extras.
+	 * Recommended step
 	 */
-	public function wc_setup_extras() {
+	public function wc_setup_recommended() {
 		?>
-		<h1><?php esc_html_e( 'Recommended Extras', 'woocommerce' ); ?></h1>
+		<h1><?php esc_html_e( 'Recommended for All WooCommerce Stores', 'woocommerce' ); ?></h1>
 		<form method="post">
 			<?php if ( $this->should_show_theme_extra() ) : ?>
 			<ul class="wc-wizard-services featured">
@@ -1636,9 +1642,9 @@ class WC_Admin_Setup_Wizard {
 	}
 
 	/**
-	 * Extras step save.
+	 * Recommended step save.
 	 */
-	public function wc_setup_extras_save() {
+	public function wc_setup_recommended_save() {
 		check_admin_referer( 'wc-setup' );
 
 		$setup_automated_tax = isset( $_POST['setup_automated_taxes'] ) && 'yes' === $_POST['setup_automated_taxes'];
