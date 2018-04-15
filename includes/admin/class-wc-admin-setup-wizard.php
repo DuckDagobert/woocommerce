@@ -121,10 +121,15 @@ class WC_Admin_Setup_Wizard {
 		return in_array( $country_code, $tax_supported_countries, true );
 	}
 
+	protected function should_show_google_analytics() {
+		return current_user_can( 'install_plugins' );
+	}
+
 	protected function should_show_recommended_step() {
 		// Show if at least one of the recommendations will be displayed
 		return $this->should_show_theme()
-			|| $this->should_show_automated_tax();
+			|| $this->should_show_automated_tax()
+			|| $this->should_show_google_analytics();
 	}
 
 	/**
@@ -1630,6 +1635,16 @@ class WC_Admin_Setup_Wizard {
 						'is_checked'  => (bool) get_option( 'woocommerce_setup_automated_taxes' ),
 					) );
 				endif;
+
+				if ( $this->should_show_google_analytics() ) :
+					$this->display_recommended_item( array(
+						'type'        => 'google_analytics',
+						'title'       => __( 'Google Analytics', 'woocommerce' ),
+						'description' => __( 'Connect your store to Google Analytics for basic eCommerce analytics and to support Display advertising.', 'woocommerce' ),
+						'img_url'     => WC()->plugin_url() . '/assets/images/analytics.svg',
+						'img_alt'     => __( 'Google Analytics icon', 'woocommerce' ),
+					) );
+				endif;
 			?>
 		</ul>
 			<p class="wc-setup-actions step">
@@ -1648,6 +1663,7 @@ class WC_Admin_Setup_Wizard {
 
 		$setup_storefront       = isset( $_POST['setup_storefront_theme'] ) && 'yes' === $_POST['setup_storefront_theme'];
 		$setup_automated_tax    = isset( $_POST['setup_automated_taxes'] ) && 'yes' === $_POST['setup_automated_taxes'];
+		$setup_google_analytics = isset( $_POST['setup_google_analytics'] ) && 'yes' === $_POST['setup_google_analytics'];
 
 		update_option( 'woocommerce_calc_taxes', $setup_automated_tax ? 'yes' : 'no' );
 		update_option( 'woocommerce_setup_automated_taxes', $setup_automated_tax );
@@ -1658,6 +1674,16 @@ class WC_Admin_Setup_Wizard {
 
 		if ( $setup_automated_tax ) {
 			$this->install_woocommerce_services();
+		}
+
+		if ( $setup_google_analytics ) {
+			$this->install_plugin(
+				'woocommerce-google-analytics-integration',
+				array(
+					'name'      => __( 'WooCommerce Google Analytics Integration', 'woocommerce' ),
+					'repo-slug' => 'woocommerce-google-analytics-integration',
+				)
+			);
 		}
 
 		wp_redirect( esc_url_raw( $this->get_next_step_link() ) );
